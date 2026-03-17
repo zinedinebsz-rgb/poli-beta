@@ -1,0 +1,135 @@
+import { useState } from 'react';
+import { ETHIC_PROFILES } from '../data/constants';
+
+export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState("profile");
+  const [notifPrefs, setNotifPrefs] = useState({perf:true,esg:true,fees:true,goals:false,dividends:true,security:true});
+  const [twoFA, setTwoFA] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
+
+  const Toggle = ({on, onChange}) => (
+    <button onClick={() => onChange(!on)} className={`w-10 h-5 rounded-full transition-colors flex items-center ${on ? "bg-accent" : "bg-white/10"}`}>
+      <div className={`w-4 h-4 rounded-full bg-white transition-transform mx-0.5 ${on ? "translate-x-5" : "translate-x-0"}`}/>
+    </button>
+  );
+
+  const tabs = [
+    {id:"profile",label:"Profil",icon:"👤"},
+    {id:"connections",label:"Connexions",icon:"🔗"},
+    {id:"notifications",label:"Notifications",icon:"🔔"},
+    {id:"ethical",label:"Éthique",icon:"🌱"},
+    {id:"security",label:"Sécurité",icon:"🔒"},
+    {id:"data",label:"Données",icon:"💾"},
+  ];
+
+  return (
+    <div className="space-y-6 animate-fadeIn">
+      <div>
+        <h1 className="text-xl text-white display-serif">Paramètres</h1>
+        <p className="text-sm text-white/40 mt-1">Configuration de votre compte</p>
+      </div>
+
+      <div className="grid grid-cols-12 gap-5">
+        <div className="col-span-3">
+          <div className="space-y-1">
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => setActiveTab(t.id)}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all text-left ${activeTab === t.id ? "bg-white/5 text-white" : "text-white/40 hover:text-white/60"}`}>
+                <span>{t.icon}</span>{t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="col-span-9">
+          {activeTab === "profile" && (
+            <div className="card space-y-4">
+              <h2 className="text-sm font-semibold text-white display-serif">Profil</h2>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center text-xl font-bold text-accent">ZB</div>
+                <div><p className="font-medium text-white">Zinédine Bensky</p><p className="text-xs text-white/40">zizoubensky@icloud.com</p><span className="text-[10px] px-2 py-0.5 rounded bg-accent/10 text-accent">Plan Pro</span></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><label className="text-xs text-white/40 mb-1 block">Nom</label><input className="input-base w-full" defaultValue="Zinédine Bensky"/></div>
+                <div><label className="text-xs text-white/40 mb-1 block">Email</label><input className="input-base w-full" defaultValue="zizoubensky@icloud.com"/></div>
+              </div>
+              <button className="btn-primary text-sm mt-2">Sauvegarder</button>
+            </div>
+          )}
+
+          {activeTab === "notifications" && (
+            <div className="card space-y-4">
+              <h2 className="text-sm font-semibold text-white display-serif">Notifications</h2>
+              {Object.entries(notifPrefs).map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between py-2">
+                  <div><p className="text-sm text-white capitalize">{k.replace(/([A-Z])/g, ' $1')}</p><p className="text-xs text-white/40">Alertes {k}</p></div>
+                  <Toggle on={v} onChange={val => setNotifPrefs({...notifPrefs,[k]:val})}/>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === "security" && (
+            <div className="card space-y-4">
+              <h2 className="text-sm font-semibold text-white display-serif">Sécurité</h2>
+              <div className="flex items-center justify-between py-2">
+                <div><p className="text-sm text-white">Authentification 2FA</p><p className="text-xs text-white/40">TOTP / Authenticator</p></div>
+                <Toggle on={twoFA} onChange={setTwoFA}/>
+              </div>
+              <div className="surface-2 rounded-lg p-4">
+                <p className="text-xs text-white/40 mb-2">Chiffrement</p>
+                <div className="flex gap-3">
+                  {["AES-256","TLS 1.3","Zero-knowledge"].map(s => (
+                    <span key={s} className="text-xs px-2 py-1 rounded bg-emerald-500/10 text-emerald-400">{s}</span>
+                  ))}
+                </div>
+              </div>
+              <button className="btn-secondary text-sm">Changer le mot de passe</button>
+            </div>
+          )}
+
+          {activeTab === "connections" && (
+            <div className="card space-y-4">
+              <h2 className="text-sm font-semibold text-white display-serif">Connexions</h2>
+              {[{n:"Boursorama",s:"Connecté",c:true},{n:"BNP Paribas",s:"Connecté",c:true},{n:"Degiro",s:"Non connecté",c:false}].map(b => (
+                <div key={b.n} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                  <div><p className="text-sm text-white">{b.n}</p><p className="text-xs text-white/40">{b.s}</p></div>
+                  <span className={b.c ? "text-xs text-emerald-400" : "text-xs text-white/40"}>{b.c ? "✓ Synchro" : "Connecter"}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === "ethical" && (
+            <div className="card space-y-4">
+              <h2 className="text-sm font-semibold text-white display-serif">Profil éthique</h2>
+              <p className="text-sm text-white/60">Votre profil éthique détermine les scores affichés sur chaque actif.</p>
+              <div className="flex flex-wrap gap-2">
+                {ETHIC_PROFILES.slice(0, 10).map(p => (
+                  <button key={p.id} className="px-3 py-1.5 rounded-md text-xs border border-white/5 text-white/60 hover:border-accent hover:text-accent transition-all">
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "data" && (
+            <div className="card space-y-4">
+              <h2 className="text-sm font-semibold text-white display-serif">Données</h2>
+              <div className="flex gap-3">
+                {["CSV","PDF","JSON"].map(f => (
+                  <button key={f} className="btn-secondary text-sm flex items-center gap-2">📥 Exporter {f}</button>
+                ))}
+              </div>
+              <div className="mt-6 p-4 rounded-lg border border-red-500/20 bg-red-500/5">
+                <p className="text-sm font-medium text-red-400">Zone dangereuse</p>
+                <p className="text-xs text-white/40 mt-1">Supprimer votre compte et toutes vos données.</p>
+                <button className="mt-3 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm hover:bg-red-500/20 transition-colors">Supprimer mon compte</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
