@@ -19,19 +19,16 @@ export default function AuthPage() {
 
     try {
       if (mode === 'login') {
-        const { error } = await signIn(email, password);
-        if (error) setError(error.message);
+        await signIn(email, password);
       } else if (mode === 'register') {
-        const { error } = await signUp(email, password, { full_name: name });
-        if (error) setError(error.message);
-        else setMessage('Compte cr\u00e9\u00e9 ! V\u00e9rifie ton email pour confirmer.');
+        await signUp(email, password);
+        setMessage('Compte cr\u00e9\u00e9 ! V\u00e9rifie ton email pour confirmer.');
       } else if (mode === 'reset') {
-        const { error } = await resetPassword(email);
-        if (error) setError(error.message);
-        else setMessage('Email de r\u00e9initialisation envoy\u00e9.');
+        await resetPassword(email);
+        setMessage('Email de r\u00e9initialisation envoy\u00e9.');
       }
     } catch (err) {
-      setError('Une erreur est survenue. R\u00e9essaie.');
+      setError(err?.message || 'Une erreur est survenue. R\u00e9essaie.');
     }
     setLoading(false);
   };

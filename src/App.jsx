@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useAuth } from './lib/AuthContext';
-import { AppProvider } from './lib/AppContext';
+import { AppProvider, AppCtx } from './lib/AppContext';
 
 // Layout
 import Sidebar from './components/Sidebar';
@@ -23,7 +23,7 @@ import ProPage from './pages/ProPage';
 import ManagersPage from './pages/ManagersPage';
 import SettingsPage from './pages/SettingsPage';
 
-const pages = {
+const pagesMap = {
   dashboard: DashboardPage,
   invest: InvestPage,
   bank: BankPage,
@@ -39,25 +39,23 @@ const pages = {
 };
 
 function AppShell() {
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const { currentPage } = useContext(AppCtx);
   const [obDone, setObDone] = useState(() => localStorage.getItem('poli_ob') === 'done');
 
-  const PageComp = pages[currentPage] || DashboardPage;
+  const PageComp = pagesMap[currentPage] || DashboardPage;
 
   return (
-    <AppProvider value={{ currentPage, setCurrentPage }}>
-      <div className="layout-main">
-        <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
-        <div className="layout-content">
-          <TopBar currentPage={currentPage} />
-          <div className="page-container animate-fadeIn" key={currentPage}>
-            <PageComp />
-          </div>
+    <div className="layout-main">
+      <Sidebar />
+      <div className="layout-content">
+        <TopBar />
+        <div className="page-container animate-fadeIn" key={currentPage}>
+          <PageComp />
         </div>
-        <CommandPalette />
-        {!obDone && <Onboarding onDone={() => setObDone(true)} />}
       </div>
-    </AppProvider>
+      <CommandPalette />
+      {!obDone && <Onboarding onDone={() => setObDone(true)} />}
+    </div>
   );
 }
 
@@ -82,7 +80,11 @@ export default function App() {
 
   // If Supabase not configured, skip auth (dev/demo mode)
   if (!supabaseConfigured || user) {
-    return <AppShell />;
+    return (
+      <AppProvider>
+        <AppShell />
+      </AppProvider>
+    );
   }
 
   return <AuthPage />;

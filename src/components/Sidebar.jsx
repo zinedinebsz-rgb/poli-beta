@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useContext } from 'react';
 import { NAV } from '../data/constants';
 import { Icon } from '../data/icons';
+import { AppCtx } from '../lib/AppContext';
 
 const PoliMark = ({ size = 32 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
@@ -10,7 +11,8 @@ const PoliMark = ({ size = 32 }) => (
   </svg>
 );
 
-export default function Sidebar({ currentPage, setCurrentPage }) {
+export default function Sidebar() {
+  const { currentPage, setCurrentPage } = useContext(AppCtx);
   const sections = {
     main: NAV.filter(n => n.section === 'main'),
     tools: NAV.filter(n => n.section === 'tools'),
