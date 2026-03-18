@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ETHIC_PROFILES, ASSETS } from '../data/constants';
 import Icon from '../data/icons';
 
@@ -8,6 +8,16 @@ export default function InvestPage() {
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [showAssetDetail, setShowAssetDetail] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('poliEthicalProfile');
+    if (saved) setSelectedProfile(saved);
+  }, []);
+
+  const handleProfileChange = (profileId) => {
+    setSelectedProfile(profileId);
+    localStorage.setItem('poliEthicalProfile', profileId || '');
+  };
 
   const profiles = useMemo(() => {
     const cats = {};
@@ -32,12 +42,24 @@ export default function InvestPage() {
 
   return (
     <div className="space-y-6">
+      {selectedProfile && (
+        <div className="card bg-accent-emerald/10 border border-accent-emerald/30 animate-slideInUp">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xs text-accent-emerald/70">Mon profil actif</div>
+              <div className="text-lg font-semibold text-accent-emerald mt-1">{ETHIC_PROFILES.find(p => p.id === selectedProfile)?.name || 'Profil sélectionné'}</div>
+            </div>
+            <button onClick={() => handleProfileChange(null)} className="text-xs px-3 py-1 rounded bg-accent-emerald/20 hover:bg-accent-emerald/30 text-accent-emerald transition">Réinitialiser</button>
+          </div>
+        </div>
+      )}
+
       <div className="card animate-slideInUp">
         <div className="mb-4">
           <div className="text-white/60 text-sm mb-3">Profils Éthiques</div>
           <div className="flex gap-2 overflow-x-auto pb-2">
             <button
-              onClick={() => setSelectedProfile(null)}
+              onClick={() => handleProfileChange(null)}
               className={`px-4 py-2 rounded-lg whitespace-nowrap transition text-sm font-medium ${
                 !selectedProfile
                   ? 'bg-accent-emerald text-surface-0'
@@ -51,7 +73,7 @@ export default function InvestPage() {
                 {items.slice(0, 3).map(profile => (
                   <button
                     key={profile.id}
-                    onClick={() => setSelectedProfile(profile.id)}
+                    onClick={() => handleProfileChange(profile.id)}
                     className={`px-4 py-2 rounded-lg whitespace-nowrap transition text-sm font-medium ${
                       selectedProfile === profile.id
                         ? 'bg-accent-emerald text-surface-0'

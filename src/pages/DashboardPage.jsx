@@ -84,6 +84,32 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <div className="card animate-slideInUp">
+        <div className="text-white/60 text-sm mb-4">Marchés (dernière mise à jour: 15 mars 2026)</div>
+        <div className="grid grid-cols-4 gap-3">
+          <div className="surface-2 rounded-lg p-3">
+            <div className="text-xs text-white/60">CAC 40</div>
+            <div className="text-xl font-semibold text-white mt-1">7245.30</div>
+            <div className="text-xs text-emerald-400 mt-1">+1.24%</div>
+          </div>
+          <div className="surface-2 rounded-lg p-3">
+            <div className="text-xs text-white/60">DAX</div>
+            <div className="text-xl font-semibold text-white mt-1">18456.00</div>
+            <div className="text-xs text-emerald-400 mt-1">+0.89%</div>
+          </div>
+          <div className="surface-2 rounded-lg p-3">
+            <div className="text-xs text-white/60">S&P 500</div>
+            <div className="text-xl font-semibold text-white mt-1">5024.75</div>
+            <div className="text-xs text-emerald-400 mt-1">+1.02%</div>
+          </div>
+          <div className="surface-2 rounded-lg p-3">
+            <div className="text-xs text-white/60">NIKKEI 225</div>
+            <div className="text-xl font-semibold text-white mt-1">28932.45</div>
+            <div className="text-xs text-red-400 mt-1">-0.45%</div>
+          </div>
+        </div>
+      </div>
+
       {showFees && (
         <div className="card animate-slideInUp border-accent-emerald/30 border-2">
           <div className="text-white font-semibold mb-4">Analyse des frais</div>

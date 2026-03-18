@@ -1,39 +1,71 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PROP_FIRMS } from '../data/constants';
 
 export default function ProPage() {
   const [tab, setTab] = useState("trading");
-  const [accounts] = useState([
-    {id:1,firm:"Topstep",accountId:"TS-50K-001",balance:52400,pnl:2400,status:"active"},
-    {id:2,firm:"Apex Trader",accountId:"APX-150K-003",balance:148200,pnl:-1800,status:"active"},
-    {id:3,firm:"FTMO",accountId:"FTMO-100K",balance:100000,pnl:0,status:"evaluation"},
-  ]);
-  const totalCapital = accounts.reduce((s, a) => s + a.balance, 0);
-  const totalPnl = accounts.reduce((s, a) => s + a.pnl, 0);
 
-  const [clients] = useState([
-    {id:1,name:"ACME Corp",ca:45000,invoices:3,status:"actif"},
-    {id:2,name:"TechStart SAS",ca:28000,invoices:2,status:"actif"},
-    {id:3,name:"BioLab SARL",ca:12000,invoices:1,status:"prospect"},
-  ]);
-  const [invoices] = useState([
-    {id:1,client:"ACME Corp",amount:15000,date:"01/03/2026",status:"paid"},
-    {id:2,client:"ACME Corp",amount:15000,date:"15/02/2026",status:"pending"},
-    {id:3,client:"TechStart SAS",amount:14000,date:"01/03/2026",status:"overdue"},
-  ]);
+  // Load from localStorage or use defaults
+  const [accounts, setAccounts] = useState([]);
+  const [pmeData, setPmeData] = useState({company:"",siret:"",sector:"",revenue:"",employees:"",foundingDate:"",description:""});
+  const [cabinetData, setCabinetData] = useState({name:"",amfNumber:"",aum:"",clients:"",specialties:""});
+  const [editingAccount, setEditingAccount] = useState(null);
+  const [newAccount, setNewAccount] = useState({firm:"",accountId:"",balance:"",pnl:"",status:"active"});
 
-  const [expenses] = useState([
-    {id:1,label:"Loyer bureau",amount:1200,cat:"Locaux",date:"01/03"},
-    {id:2,label:"Abonnement SaaS",amount:450,cat:"Logiciels",date:"05/03"},
-    {id:3,label:"Déplacement client",amount:280,cat:"Transport",date:"12/03"},
-  ]);
-  const [revenue] = useState([
-    {id:1,label:"Facture ACME",amount:15000,date:"01/03"},
-    {id:2,label:"Facture TechStart",amount:14000,date:"15/03"},
-  ]);
-  const totalRev = revenue.reduce((s, r) => s + r.amount, 0);
-  const totalExp = expenses.reduce((s, e) => s + e.amount, 0);
-  const margin = Math.round((totalRev - totalExp) / totalRev * 100);
+  useEffect(() => {
+    const saved = localStorage.getItem('poliPro');
+    if (saved) {
+      const data = JSON.parse(saved);
+      if(data.accounts) setAccounts(data.accounts);
+      if(data.pme) setPmeData(data.pme);
+      if(data.cabinet) setCabinetData(data.cabinet);
+    }
+  }, []);
+
+  const savePro = (key, value) => {
+    const data = JSON.parse(localStorage.getItem('poliPro') || '{}');
+    data[key] = value;
+    localStorage.setItem('poliPro', JSON.stringify(data));
+  };
+
+  const addAccount = () => {
+    if(newAccount.firm && newAccount.accountId && newAccount.balance) {
+      const acc = {...newAccount, id: Date.now(), balance: parseFloat(newAccount.balance), pnl: parseFloat(newAccount.pnl || 0)};
+      const updated = [...accounts, acc];
+      setAccounts(updated);
+      savePro('accounts', updated);
+      setNewAccount({firm:"",accountId:"",balance:"",pnl:"",status:"active"});
+    }
+  };
+
+  const updateAccount = () => {
+    if(editingAccount) {
+      const updated = accounts.map(a => a.id === editingAccount.id ? editingAccount : a);
+      setAccounts(updated);
+      savePro('accounts', updated);
+      setEditingAccount(null);
+    }
+  };
+
+  const deleteAccount = (id) => {
+    const updated = accounts.filter(a => a.id !== id);
+    setAccounts(updated);
+    savePro('accounts', updated);
+  };
+
+  const updatePmeData = (key, value) => {
+    const updated = {...pmeData, [key]: value};
+    setPmeData(updated);
+    savePro('pme', updated);
+  };
+
+  const updateCabinetData = (key, value) => {
+    const updated = {...cabinetData, [key]: value};
+    setCabinetData(updated);
+    savePro('cabinet', updated);
+  };
+
+  const totalCapital = accounts.reduce((s, a) => s + (a.balance || 0), 0);
+  const totalPnl = accounts.reduce((s, a) => s + (a.pnl || 0), 0);
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -61,22 +93,60 @@ export default function ProPage() {
             </div>
           ))}
         </div>
+
+        <div className="card">
+          <p className="text-sm font-medium text-white/80 mb-4">Ajouter un compte prop firm</p>
+          <div className="grid grid-cols-6 gap-2 mb-4">
+            <input placeholder="Cabinet" value={newAccount.firm} onChange={(e) => setNewAccount({...newAccount, firm: e.target.value})} className="input-base text-xs" />
+            <input placeholder="ID Compte" value={newAccount.accountId} onChange={(e) => setNewAccount({...newAccount, accountId: e.target.value})} className="input-base text-xs" />
+            <input placeholder="Solde €" type="number" value={newAccount.balance} onChange={(e) => setNewAccount({...newAccount, balance: e.target.value})} className="input-base text-xs" />
+            <input placeholder="PnL €" type="number" value={newAccount.pnl} onChange={(e) => setNewAccount({...newAccount, pnl: e.target.value})} className="input-base text-xs" />
+            <select value={newAccount.status} onChange={(e) => setNewAccount({...newAccount, status: e.target.value})} className="input-base text-xs">
+              <option value="active">Active</option>
+              <option value="evaluation">Evaluation</option>
+              <option value="funded">Funded</option>
+            </select>
+            <button onClick={addAccount} className="btn-primary text-xs">Ajouter</button>
+          </div>
+        </div>
+
         <div className="space-y-2">
           {accounts.map(a => (
-            <div key={a.id} className="flex items-center gap-4 px-5 py-4 card">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-white">{a.firm} · {a.accountId}</p>
-                <p className="text-xs text-white/40">Status: <span className={a.status === "active" ? "text-emerald-400" : a.status === "evaluation" ? "text-amber-400" : "text-white/40"}>{a.status}</span></p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-medium text-white mono">{a.balance.toLocaleString("fr-FR")} €</p>
-                <p className={`text-xs mono ${a.pnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>{a.pnl >= 0 ? "+" : ""}{a.pnl.toLocaleString("fr-FR")} €</p>
-              </div>
+            <div key={a.id} className="flex items-center gap-4 px-5 py-4 card hover:bg-white/5">
+              {editingAccount?.id === a.id ? (
+                <>
+                  <input placeholder="Cabinet" value={editingAccount.firm} onChange={(e) => setEditingAccount({...editingAccount, firm: e.target.value})} className="input-base text-xs flex-1" />
+                  <input placeholder="ID" value={editingAccount.accountId} onChange={(e) => setEditingAccount({...editingAccount, accountId: e.target.value})} className="input-base text-xs" />
+                  <input type="number" value={editingAccount.balance} onChange={(e) => setEditingAccount({...editingAccount, balance: parseFloat(e.target.value)})} className="input-base text-xs w-24" />
+                  <input type="number" value={editingAccount.pnl} onChange={(e) => setEditingAccount({...editingAccount, pnl: parseFloat(e.target.value)})} className="input-base text-xs w-24" />
+                  <select value={editingAccount.status} onChange={(e) => setEditingAccount({...editingAccount, status: e.target.value})} className="input-base text-xs">
+                    <option value="active">Active</option>
+                    <option value="evaluation">Evaluation</option>
+                    <option value="funded">Funded</option>
+                  </select>
+                  <button onClick={updateAccount} className="btn-primary text-xs">✓</button>
+                  <button onClick={() => setEditingAccount(null)} className="btn-secondary text-xs">✕</button>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">{a.firm} · {a.accountId}</p>
+                    <p className="text-xs text-white/40">Status: <span className={a.status === "active" ? "text-emerald-400" : a.status === "evaluation" ? "text-amber-400" : "text-white/40"}>{a.status}</span></p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-white mono">{a.balance.toLocaleString("fr-FR")} €</p>
+                    <p className={`text-xs mono ${a.pnl >= 0 ? "text-emerald-400" : "text-red-400"}`}>{a.pnl >= 0 ? "+" : ""}{a.pnl.toLocaleString("fr-FR")} €</p>
+                  </div>
+                  <button onClick={() => setEditingAccount(a)} className="btn-secondary text-xs">Éditer</button>
+                  <button onClick={() => deleteAccount(a.id)} className="btn-secondary text-xs">Suppr.</button>
+                </>
+              )}
             </div>
           ))}
         </div>
+
         <div className="card">
-          <p className="text-sm font-medium text-white/80 mb-3">Prop Firms</p>
+          <p className="text-sm font-medium text-white/80 mb-3">Prop Firms disponibles</p>
           <div className="space-y-2">
             {PROP_FIRMS.map(f => (
               <div key={f.name} className="flex items-center gap-3 px-3 py-2 surface-2 rounded-lg">
@@ -91,68 +161,45 @@ export default function ProPage() {
       </>}
 
       {tab === "cabinet" && <>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="card border-l-[3px] border-l-emerald-500"><p className="text-[10px] text-white/40 uppercase mb-2">CA Total</p><p className="text-lg font-bold text-emerald-400 mono">{clients.reduce((s, c) => s + c.ca, 0).toLocaleString("fr-FR")} €</p></div>
-          <div className="card border-l-[3px] border-l-amber-500"><p className="text-[10px] text-white/40 uppercase mb-2">Impayés</p><p className="text-lg font-bold text-amber-400 mono">{invoices.filter(i => i.status !== "paid").reduce((s, i) => s + i.amount, 0).toLocaleString("fr-FR")} €</p></div>
-          <div className="card border-l-[3px] border-l-blue-500"><p className="text-[10px] text-white/40 uppercase mb-2">Clients</p><p className="text-lg font-bold text-white mono">{clients.length}</p></div>
-        </div>
-        <div className="card">
-          <p className="text-sm font-medium text-white/80 mb-3">Clients</p>
-          <div className="space-y-2">
-            {clients.map(c => (
-              <div key={c.id} className="flex items-center gap-3 px-3 py-2.5 surface-2 rounded-lg">
-                <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-xs font-bold text-accent">{c.name.slice(0, 2)}</div>
-                <div className="flex-1"><p className="text-sm text-white">{c.name}</p><p className="text-xs text-white/40">{c.invoices} factures</p></div>
-                <span className={`text-xs px-2 py-0.5 rounded ${c.status === "actif" ? "bg-emerald-500/10 text-emerald-400" : "bg-white/5 text-white/40"}`}>{c.status}</span>
-                <span className="text-sm font-medium text-white mono">{c.ca.toLocaleString("fr-FR")} €</span>
-              </div>
-            ))}
+        {cabinetData.name ? (
+          <div className="grid grid-cols-3 gap-4">
+            <div className="card border-l-[3px] border-l-emerald-500"><p className="text-[10px] text-white/40 uppercase mb-2">Cabinet</p><p className="text-lg font-bold text-emerald-400">{cabinetData.name}</p></div>
+            <div className="card border-l-[3px] border-l-amber-500"><p className="text-[10px] text-white/40 uppercase mb-2">Numéro AMF</p><p className="text-lg font-bold text-amber-400 mono">{cabinetData.amfNumber}</p></div>
+            <div className="card border-l-[3px] border-l-blue-500"><p className="text-[10px] text-white/40 uppercase mb-2">AUM</p><p className="text-lg font-bold text-white mono">{cabinetData.aum.toLocaleString("fr-FR")} €</p></div>
           </div>
-        </div>
+        ) : null}
+
         <div className="card">
-          <p className="text-sm font-medium text-white/80 mb-3">Factures récentes</p>
-          <div className="space-y-2">
-            {invoices.map(inv => (
-              <div key={inv.id} className="flex items-center gap-3 px-3 py-2.5 surface-2 rounded-lg">
-                <span className="text-sm text-white flex-1">{inv.client}</span>
-                <span className="text-xs text-white/40">{inv.date}</span>
-                <span className="text-sm font-medium text-white mono">{inv.amount.toLocaleString("fr-FR")} €</span>
-                <span className={`text-[10px] px-2 py-0.5 rounded ${inv.status === "paid" ? "bg-emerald-500/10 text-emerald-400" : inv.status === "pending" ? "bg-amber-500/10 text-amber-400" : "bg-red-500/10 text-red-400"}`}>{inv.status === "paid" ? "Payée" : inv.status === "pending" ? "En attente" : "Impayée"}</span>
-              </div>
-            ))}
+          <p className="text-sm font-medium text-white/80 mb-4">Infos Cabinet</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div><label className="text-xs text-white/40 mb-1 block">Nom du cabinet</label><input value={cabinetData.name} onChange={(e) => updateCabinetData('name', e.target.value)} className="input-base w-full" placeholder="Nom du cabinet" /></div>
+            <div><label className="text-xs text-white/40 mb-1 block">Numéro AMF</label><input value={cabinetData.amfNumber} onChange={(e) => updateCabinetData('amfNumber', e.target.value)} className="input-base w-full" placeholder="AMF XXX" /></div>
+            <div><label className="text-xs text-white/40 mb-1 block">AUM (€)</label><input type="number" value={cabinetData.aum} onChange={(e) => updateCabinetData('aum', parseFloat(e.target.value) || 0)} className="input-base w-full" placeholder="0" /></div>
+            <div><label className="text-xs text-white/40 mb-1 block">Nombre de clients</label><input type="number" value={cabinetData.clients} onChange={(e) => updateCabinetData('clients', e.target.value)} className="input-base w-full" placeholder="0" /></div>
+            <div className="col-span-2"><label className="text-xs text-white/40 mb-1 block">Spécialités</label><input value={cabinetData.specialties} onChange={(e) => updateCabinetData('specialties', e.target.value)} className="input-base w-full" placeholder="Gestion d'actifs, CGP, etc." /></div>
           </div>
         </div>
       </>}
 
       {tab === "pme" && <>
-        <div className="grid grid-cols-4 gap-4">
-          <div className="card border-l-[3px] border-l-emerald-500"><p className="text-[10px] text-white/40 uppercase mb-2">Chiffre d'affaires</p><p className="text-lg font-bold text-emerald-400 mono">{totalRev.toLocaleString("fr-FR")} €</p></div>
-          <div className="card border-l-[3px] border-l-red-500"><p className="text-[10px] text-white/40 uppercase mb-2">Charges</p><p className="text-lg font-bold text-red-400 mono">{totalExp.toLocaleString("fr-FR")} €</p></div>
-          <div className="card border-l-[3px] border-l-blue-500"><p className="text-[10px] text-white/40 uppercase mb-2">Marge</p><p className="text-lg font-bold text-blue-400 mono">{margin}%</p></div>
-          <div className="card border-l-[3px] border-l-amber-500"><p className="text-[10px] text-white/40 uppercase mb-2">Résultat</p><p className="text-lg font-bold text-white mono">{(totalRev - totalExp).toLocaleString("fr-FR")} €</p></div>
-        </div>
-        <div className="grid grid-cols-2 gap-5">
-          <div className="card">
-            <p className="text-sm font-medium text-white/80 mb-3">Revenus</p>
-            {revenue.map(r => (
-              <div key={r.id} className="flex items-center gap-3 px-3 py-2 surface-2 rounded-lg mb-2">
-                <span className="text-emerald-400">↑</span>
-                <span className="text-sm text-white flex-1">{r.label}</span>
-                <span className="text-xs text-white/40">{r.date}</span>
-                <span className="text-sm font-medium text-emerald-400 mono">+{r.amount.toLocaleString("fr-FR")} €</span>
-              </div>
-            ))}
+        {pmeData.company ? (
+          <div className="grid grid-cols-3 gap-4">
+            <div className="card border-l-[3px] border-l-emerald-500"><p className="text-[10px] text-white/40 uppercase mb-2">Entreprise</p><p className="text-lg font-bold text-emerald-400">{pmeData.company}</p></div>
+            <div className="card border-l-[3px] border-l-blue-500"><p className="text-[10px] text-white/40 uppercase mb-2">SIRET</p><p className="text-lg font-bold text-white mono">{pmeData.siret}</p></div>
+            <div className="card border-l-[3px] border-l-amber-500"><p className="text-[10px] text-white/40 uppercase mb-2">Chiffre d'affaires</p><p className="text-lg font-bold text-amber-400 mono">{pmeData.revenue.toLocaleString("fr-FR")} €</p></div>
           </div>
-          <div className="card">
-            <p className="text-sm font-medium text-white/80 mb-3">Charges</p>
-            {expenses.map(e => (
-              <div key={e.id} className="flex items-center gap-3 px-3 py-2 surface-2 rounded-lg mb-2">
-                <span className="text-red-400">↓</span>
-                <span className="text-sm text-white flex-1">{e.label}</span>
-                <span className="text-xs text-white/40">{e.cat} · {e.date}</span>
-                <span className="text-sm font-medium text-red-400 mono">-{e.amount.toLocaleString("fr-FR")} €</span>
-              </div>
-            ))}
+        ) : null}
+
+        <div className="card">
+          <p className="text-sm font-medium text-white/80 mb-4">Informations PME/Entreprise</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div><label className="text-xs text-white/40 mb-1 block">Nom de l'entreprise</label><input value={pmeData.company} onChange={(e) => updatePmeData('company', e.target.value)} className="input-base w-full" placeholder="Votre entreprise" /></div>
+            <div><label className="text-xs text-white/40 mb-1 block">SIRET</label><input value={pmeData.siret} onChange={(e) => updatePmeData('siret', e.target.value)} className="input-base w-full" placeholder="SIRET 14 chiffres" /></div>
+            <div><label className="text-xs text-white/40 mb-1 block">Secteur d'activité</label><input value={pmeData.sector} onChange={(e) => updatePmeData('sector', e.target.value)} className="input-base w-full" placeholder="ex: Technologie, Commerce" /></div>
+            <div><label className="text-xs text-white/40 mb-1 block">Chiffre d'affaires (€)</label><input type="number" value={pmeData.revenue} onChange={(e) => updatePmeData('revenue', e.target.value)} className="input-base w-full" placeholder="0" /></div>
+            <div><label className="text-xs text-white/40 mb-1 block">Nombre d'employés</label><input type="number" value={pmeData.employees} onChange={(e) => updatePmeData('employees', e.target.value)} className="input-base w-full" placeholder="0" /></div>
+            <div><label className="text-xs text-white/40 mb-1 block">Date de création</label><input type="date" value={pmeData.foundingDate} onChange={(e) => updatePmeData('foundingDate', e.target.value)} className="input-base w-full" /></div>
+            <div className="col-span-2"><label className="text-xs text-white/40 mb-1 block">Description</label><textarea value={pmeData.description} onChange={(e) => updatePmeData('description', e.target.value)} className="input-base w-full h-20" placeholder="Description de votre activité..." /></div>
           </div>
         </div>
       </>}
